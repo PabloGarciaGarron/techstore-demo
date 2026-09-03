@@ -1,32 +1,28 @@
 import { expect, test } from "@playwright/test";
+import { LoginPage } from "../../pages/LoginPage";
 
 test.describe("WEB-TC-005: Rechazo de contraseña incorrecta", () => {
-  test("rechaza el inicio de sesion con contraseña incorrecta", async ({
+  test("rechaza el inicio de sesión con contraseña incorrecta", async ({
     page,
     request,
   }) => {
     const bugConfig = await request.post("/api/config/bugs", {
       data: { enabled: true },
     });
-
     expect(bugConfig.ok()).toBeTruthy();
 
-    await page.goto("/");
+    const loginPage = new LoginPage(page);
+    await loginPage.ir();
 
-    await expect(page.getByTestId("bug-status")).toHaveText("ON");
-    await expect(page.getByTestId("login-view")).toBeVisible();
-    await expect(page.getByTestId("session")).toBeHidden();
+    await expect(loginPage.bugStatus).toHaveText("ON");
+    await expect(loginPage.loginView).toBeVisible();
+    await expect(loginPage.sesion).toBeHidden();
 
-    await page.getByTestId("username-input").fill("manager");
-    await page.getByTestId("password-input").fill("manager124");
-    await page.getByTestId("login-button").click();
+    await loginPage.login("manager", "manager124");
 
-    await expect(page.getByTestId("login-error")).toBeVisible();
-    await expect(page.getByTestId("login-error")).toHaveText(
-      "Credenciales inválidas"
-    );
-
-    await expect(page.getByTestId("login-view")).toBeVisible();
-    await expect(page.getByTestId("session")).toBeHidden();
+    await expect(loginPage.mensajeError).toBeVisible();
+    await expect(loginPage.mensajeError).toHaveText("Credenciales inválidas");
+    await expect(loginPage.loginView).toBeVisible();
+    await expect(loginPage.sesion).toBeHidden();
   });
 });

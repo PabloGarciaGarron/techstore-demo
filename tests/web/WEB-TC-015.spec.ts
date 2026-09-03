@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { DealsPage } from "../../pages/DealsPage";
+import { FavoritesPage } from "../../pages/FavoritesPage";
 import { LoginPage } from "../../pages/LoginPage";
 import { NavigationPage } from "../../pages/NavigationPage";
 
-test.describe("WEB-TC-012: Visualización de Ofertas del día", () => {
-  test("debe mostrar correctamente las ofertas del día y sus descuentos", async ({
+test.describe("WEB-TC-015: Eliminar un producto de Favoritos", () => {
+  test("debe eliminar correctamente un producto de Favoritos", async ({
     page,
     request,
   }) => {
@@ -15,22 +15,21 @@ test.describe("WEB-TC-012: Visualización de Ofertas del día", () => {
 
     const loginPage = new LoginPage(page);
     const navigationPage = new NavigationPage(page);
-    const dealsPage = new DealsPage(page);
+    const favoritesPage = new FavoritesPage(page);
 
     await loginPage.ir();
     await expect(loginPage.bugStatus).toHaveText("ON");
 
     await loginPage.loginComo("customer");
-    await expect(loginPage.loginView).toBeHidden();
 
-    await navigationPage.irAOfertas();
-    await expect(dealsPage.grillaOfertas).toBeVisible();
+    await favoritesPage.agregar(1);
+    await expect(favoritesPage.contador).toHaveText("1");
 
-    for (const descuento of [13, 30, 11, 35, 18]) {
-      await expect(dealsPage.descuento(descuento)).toBeVisible();
-    }
+    await navigationPage.irAFavoritos();
+    await favoritesPage.eliminar(1);
 
-    await expect(dealsPage.descuento(25)).toHaveCount(2);
+    await expect(favoritesPage.vacio).toBeVisible();
+    await expect(favoritesPage.contador).toHaveText("0");
     await expect(loginPage.bugStatus).toHaveText("ON");
   });
 });

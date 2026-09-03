@@ -3,8 +3,8 @@ import { DealsPage } from "../../pages/DealsPage";
 import { LoginPage } from "../../pages/LoginPage";
 import { NavigationPage } from "../../pages/NavigationPage";
 
-test.describe("WEB-TC-012: Visualización de Ofertas del día", () => {
-  test("debe mostrar correctamente las ofertas del día y sus descuentos", async ({
+test.describe("WEB-TC-013: Cálculo correcto del porcentaje de descuento", () => {
+  test("debe calcular correctamente el porcentaje de descuento de una oferta", async ({
     page,
     request,
   }) => {
@@ -26,11 +26,18 @@ test.describe("WEB-TC-012: Visualización de Ofertas del día", () => {
     await navigationPage.irAOfertas();
     await expect(dealsPage.grillaOfertas).toBeVisible();
 
-    for (const descuento of [13, 30, 11, 35, 18]) {
-      await expect(dealsPage.descuento(descuento)).toBeVisible();
-    }
+    const precioOriginal = 1499.0;
+    const precioOferta = 1299.0;
 
-    await expect(dealsPage.descuento(25)).toHaveCount(2);
+    await expect(dealsPage.precio("$1499.00")).toBeVisible();
+    await expect(dealsPage.precio("$1299.00")).toBeVisible();
+
+    const porcentajeCalculado = Math.round(
+      ((precioOriginal - precioOferta) / precioOriginal) * 100
+    );
+
+    expect(porcentajeCalculado).toBe(13);
+    await expect(dealsPage.descuento(porcentajeCalculado)).toBeVisible();
     await expect(loginPage.bugStatus).toHaveText("ON");
   });
 });

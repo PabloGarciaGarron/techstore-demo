@@ -1,40 +1,39 @@
 import { expect, test } from "@playwright/test";
+import { LoginPage } from "../../pages/LoginPage";
+import { NavigationPage } from "../../pages/NavigationPage";
 
-test.describe("WEB-TC-007: Menu lateral visible despues del login", () => {
-  test("muestra el menu lateral despues de iniciar sesion correctamente", async ({
+test.describe("WEB-TC-007: Menú lateral visible después del login", () => {
+  test("muestra el menú lateral después de iniciar sesión correctamente", async ({
     page,
     request,
   }) => {
     const bugConfig = await request.post("/api/config/bugs", {
       data: { enabled: true },
     });
-
     expect(bugConfig.ok()).toBeTruthy();
 
-    await page.goto("/");
+    const loginPage = new LoginPage(page);
+    const navigationPage = new NavigationPage(page);
 
-    await expect(page.getByTestId("bug-status")).toHaveText("ON");
-    await expect(page.getByTestId("login-view")).toBeVisible();
-    await expect(page.getByTestId("session")).toBeHidden();
+    await loginPage.ir();
 
-    await page.getByTestId("username-input").fill("customer");
-    await page.getByTestId("password-input").fill("customer123");
-    await page.getByTestId("login-button").click();
+    await expect(loginPage.bugStatus).toHaveText("ON");
+    await expect(loginPage.loginView).toBeVisible();
+    await expect(loginPage.sesion).toBeHidden();
 
-    await expect(page.getByTestId("login-error")).toBeHidden();
-    await expect(page.getByTestId("login-view")).toBeHidden();
-    await expect(page.getByTestId("session")).toBeVisible();
+    await loginPage.loginComo("customer");
 
-    await expect(page.getByTestId("current-user")).toHaveText("customer");
-    await expect(page.getByTestId("current-role")).toHaveText("customer");
+    await expect(loginPage.mensajeError).toBeHidden();
+    await expect(loginPage.loginView).toBeHidden();
+    await expect(loginPage.sesion).toBeVisible();
+    await expect(loginPage.usuarioActual).toHaveText("customer");
+    await expect(loginPage.rolActual).toHaveText("customer");
 
-    await expect(page.getByTestId("sidebar")).toBeVisible();
-
-    await expect(page.getByTestId("nav-home")).toBeVisible();
-    await expect(page.getByTestId("nav-deals")).toBeVisible();
-    await expect(page.getByTestId("nav-favorites")).toBeVisible();
-    await expect(page.getByTestId("nav-orders")).toBeVisible();
-
-    await expect(page.getByTestId("nav-manage")).toBeHidden();
+    await expect(navigationPage.sidebar).toBeVisible();
+    await expect(navigationPage.inicio).toBeVisible();
+    await expect(navigationPage.ofertas).toBeVisible();
+    await expect(navigationPage.favoritos).toBeVisible();
+    await expect(navigationPage.pedidos).toBeVisible();
+    await expect(navigationPage.gestion).toBeHidden();
   });
 });

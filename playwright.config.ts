@@ -37,6 +37,7 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      launchOptions: { args: ["--start-maximized"], slowMo: 1500 },
     },
 
     {

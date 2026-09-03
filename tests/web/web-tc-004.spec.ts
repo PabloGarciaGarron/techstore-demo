@@ -1,32 +1,33 @@
 import { expect, test } from "@playwright/test";
+import { LoginPage } from "../../pages/LoginPage";
+import { NavigationPage } from "../../pages/NavigationPage";
 
-test.describe("WEB-TC-004: Inicio de sesion correcto con Admin", () => {
-  test("inicia sesion con credenciales validas y muestra rol admin", async ({
+test.describe("WEB-TC-004: Inicio de sesión correcto con Admin", () => {
+  test("inicia sesión con credenciales válidas y muestra rol admin", async ({
     page,
     request,
   }) => {
     const bugConfig = await request.post("/api/config/bugs", {
       data: { enabled: true },
     });
-
     expect(bugConfig.ok()).toBeTruthy();
 
-    await page.goto("/");
+    const loginPage = new LoginPage(page);
+    const navigationPage = new NavigationPage(page);
 
-    await expect(page.getByTestId("bug-status")).toHaveText("ON");
-    await expect(page.getByTestId("login-view")).toBeVisible();
-    await expect(page.getByTestId("session")).toBeHidden();
+    await loginPage.ir();
 
-    await page.getByTestId("username-input").fill("admin");
-    await page.getByTestId("password-input").fill("admin123");
-    await page.getByTestId("login-button").click();
+    await expect(loginPage.bugStatus).toHaveText("ON");
+    await expect(loginPage.loginView).toBeVisible();
+    await expect(loginPage.sesion).toBeHidden();
 
-    await expect(page.getByTestId("login-error")).toBeHidden();
-    await expect(page.getByTestId("login-view")).toBeHidden();
-    await expect(page.getByTestId("session")).toBeVisible();
-    await expect(page.getByTestId("current-user")).toHaveText("admin");
-    await expect(page.getByTestId("current-role")).toHaveText("admin");
+    await loginPage.loginComo("admin");
 
-    await expect(page.getByTestId("sidebar")).toBeVisible();
+    await expect(loginPage.mensajeError).toBeHidden();
+    await expect(loginPage.loginView).toBeHidden();
+    await expect(loginPage.sesion).toBeVisible();
+    await expect(loginPage.usuarioActual).toHaveText("admin");
+    await expect(loginPage.rolActual).toHaveText("admin");
+    await expect(navigationPage.sidebar).toBeVisible();
   });
 });

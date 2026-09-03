@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { CatalogPage } from "../../pages/CatalogPage";
+import { LoginPage } from "../../pages/LoginPage";
 
-test.describe("WEB-TC-001: Visualizacion del catalogo sin iniciar sesion", () => {
-  test("muestra el formulario de login y el catalogo publico con Bug Hunting ON", async ({
+test.describe("WEB-TC-001: Visualización del catálogo sin iniciar sesión", () => {
+  test("muestra el formulario de login y el catálogo público con Bug Hunting ON", async ({
     page,
     request,
   }) => {
@@ -10,22 +12,23 @@ test.describe("WEB-TC-001: Visualizacion del catalogo sin iniciar sesion", () =>
     });
     expect(bugConfig.ok()).toBeTruthy();
 
-    await page.goto("/");
+    const loginPage = new LoginPage(page);
+    const catalogPage = new CatalogPage(page);
 
-    await expect(page.getByTestId("bug-status")).toHaveText("ON");
-    await expect(page.getByTestId("login-view")).toBeVisible();
-    await expect(page.getByTestId("login-form")).toBeVisible();
-    await expect(page.getByTestId("session")).toBeHidden();
+    await loginPage.ir();
 
-    await expect(page.getByTestId("catalog-title")).toHaveText(/Cat.logo/);
-    await expect(page.getByTestId("home-view")).toBeVisible();
-    await expect(page.getByTestId("product-grid")).toBeVisible();
+    await expect(loginPage.bugStatus).toHaveText("ON");
+    await expect(loginPage.loginView).toBeVisible();
+    await expect(loginPage.loginForm).toBeVisible();
+    await expect(loginPage.sesion).toBeHidden();
 
-    const productCards = page.locator('[data-testid="product-grid"] article.product-card');
-    await expect(productCards.first()).toBeVisible();
-    await expect.poll(() => productCards.count()).toBeGreaterThan(0);
+    await expect(catalogPage.tituloCatalogo).toHaveText(/Cat.logo/);
+    await expect(catalogPage.vistaInicio).toBeVisible();
+    await expect(catalogPage.grillaProductos).toBeVisible();
 
-    await expect(productCards.first().getByTestId("product-name")).toHaveText(/\S/);
-    await expect(productCards.first().getByTestId("product-price")).toHaveText(/\S/);
+    await expect(catalogPage.tarjetasProducto.first()).toBeVisible();
+    await expect.poll(() => catalogPage.tarjetasProducto.count()).toBeGreaterThan(0);
+    await expect(catalogPage.tarjetasProducto.first().getByTestId("product-name")).toHaveText(/\S/);
+    await expect(catalogPage.tarjetasProducto.first().getByTestId("product-price")).toHaveText(/\S/);
   });
 });

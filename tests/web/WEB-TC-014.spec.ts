@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { DealsPage } from "../../pages/DealsPage";
+import { FavoritesPage } from "../../pages/FavoritesPage";
 import { LoginPage } from "../../pages/LoginPage";
 import { NavigationPage } from "../../pages/NavigationPage";
 
-test.describe("WEB-TC-012: Visualización de Ofertas del día", () => {
-  test("debe mostrar correctamente las ofertas del día y sus descuentos", async ({
+test.describe("WEB-TC-014: Agregar un producto a Favoritos", () => {
+  test("debe agregar un producto a Favoritos correctamente", async ({
     page,
     request,
   }) => {
@@ -15,22 +15,20 @@ test.describe("WEB-TC-012: Visualización de Ofertas del día", () => {
 
     const loginPage = new LoginPage(page);
     const navigationPage = new NavigationPage(page);
-    const dealsPage = new DealsPage(page);
+    const favoritesPage = new FavoritesPage(page);
 
     await loginPage.ir();
     await expect(loginPage.bugStatus).toHaveText("ON");
 
     await loginPage.loginComo("customer");
     await expect(loginPage.loginView).toBeHidden();
+    await expect(favoritesPage.contador).toHaveText("0");
 
-    await navigationPage.irAOfertas();
-    await expect(dealsPage.grillaOfertas).toBeVisible();
+    await favoritesPage.agregar(1);
+    await expect(favoritesPage.contador).toHaveText("1");
 
-    for (const descuento of [13, 30, 11, 35, 18]) {
-      await expect(dealsPage.descuento(descuento)).toBeVisible();
-    }
-
-    await expect(dealsPage.descuento(25)).toHaveCount(2);
+    await navigationPage.irAFavoritos();
+    await expect(favoritesPage.productoPorNombre('Laptop Pro 14"')).toBeVisible();
     await expect(loginPage.bugStatus).toHaveText("ON");
   });
 });

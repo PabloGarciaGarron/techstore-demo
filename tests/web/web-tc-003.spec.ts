@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { LoginPage } from "../../pages/LoginPage";
+import { NavigationPage } from "../../pages/NavigationPage";
 
-test.describe("WEB-TC-003: Inicio de sesion correcto con Manager", () => {
-  test("inicia sesion con credenciales validas y muestra rol manager", async ({
+test.describe("WEB-TC-003: Inicio de sesión correcto con Manager", () => {
+  test("inicia sesión con credenciales válidas y muestra rol manager", async ({
     page,
     request,
   }) => {
@@ -10,21 +12,22 @@ test.describe("WEB-TC-003: Inicio de sesion correcto con Manager", () => {
     });
     expect(bugConfig.ok()).toBeTruthy();
 
-    await page.goto("/");
+    const loginPage = new LoginPage(page);
+    const navigationPage = new NavigationPage(page);
 
-    await expect(page.getByTestId("bug-status")).toHaveText("ON");
-    await expect(page.getByTestId("login-view")).toBeVisible();
-    await expect(page.getByTestId("session")).toBeHidden();
+    await loginPage.ir();
 
-    await page.getByTestId("username-input").fill("manager");
-    await page.getByTestId("password-input").fill("manager123");
-    await page.getByTestId("login-button").click();
+    await expect(loginPage.bugStatus).toHaveText("ON");
+    await expect(loginPage.loginView).toBeVisible();
+    await expect(loginPage.sesion).toBeHidden();
 
-    await expect(page.getByTestId("login-error")).toBeHidden();
-    await expect(page.getByTestId("login-view")).toBeHidden();
-    await expect(page.getByTestId("session")).toBeVisible();
-    await expect(page.getByTestId("current-user")).toHaveText("manager");
-    await expect(page.getByTestId("current-role")).toHaveText("manager");
-    await expect(page.getByTestId("sidebar")).toBeVisible();
+    await loginPage.loginComo("manager");
+
+    await expect(loginPage.mensajeError).toBeHidden();
+    await expect(loginPage.loginView).toBeHidden();
+    await expect(loginPage.sesion).toBeVisible();
+    await expect(loginPage.usuarioActual).toHaveText("manager");
+    await expect(loginPage.rolActual).toHaveText("manager");
+    await expect(navigationPage.sidebar).toBeVisible();
   });
 });

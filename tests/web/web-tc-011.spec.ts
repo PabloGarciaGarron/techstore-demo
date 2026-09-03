@@ -1,70 +1,44 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { CatalogPage } from "../../pages/CatalogPage";
+import { LoginPage } from "../../pages/LoginPage";
 
 test.describe("WEB-TC-011: Categorías únicas y filtro Accesorios", () => {
   test("debe mostrar categorías sin duplicados y filtrar productos de Accesorios", async ({
     page,
     request,
   }) => {
-    // 1. Activar Bug Hunting
     const bugConfig = await request.post("/api/config/bugs", {
       data: { enabled: true },
     });
-
     expect(bugConfig.ok()).toBeTruthy();
 
-    // 2. Ingresar a la aplicación
-    await page.goto("/");
+    const loginPage = new LoginPage(page);
+    const catalogPage = new CatalogPage(page);
 
-    // 3. Verificar que Bug Hunting esté activo
-    await expect(page.getByTestId("bug-status")).toHaveText("ON");
+    await loginPage.ir();
+    await expect(loginPage.bugStatus).toHaveText("ON");
 
-    // 4. Iniciar sesión como Customer
-    await page.getByTestId("username-input").fill("customer");
-    await page.getByTestId("password-input").fill("customer123");
-    await page.getByTestId("login-button").click();
+    await loginPage.loginComo("customer");
+    await expect(loginPage.loginView).toBeHidden();
+    await expect(catalogPage.grillaProductos).toBeVisible();
 
-    // 5. Verificar inicio de sesión correcto
-    await expect(page.getByTestId("login-view")).toBeHidden();
-    await expect(page.getByTestId("product-grid")).toBeVisible();
-
-    // 6. Obtener todas las categorías mostradas
-    const categorias = page.locator('[data-testid^="category-"]');
-    const nombresCategorias = await categorias.allTextContents();
-
-    // 7. Verificar que no existan categorías duplicadas
+    const nombresCategorias = await catalogPage.categorias.allTextContents();
     const categoriasNormalizadas = nombresCategorias.map((categoria) =>
       categoria.trim()
     );
-
     const categoriasUnicas = new Set(categoriasNormalizadas);
 
     expect(categoriasUnicas.size).toBe(categoriasNormalizadas.length);
+    await expect(catalogPage.categoria("Accesorios")).toHaveCount(1);
 
-    // 8. Verificar que Accesorios aparezca una sola vez
-    await expect(page.getByTestId("category-Accesorios")).toHaveCount(1);
+    await catalogPage.filtrarPorCategoria("Accesorios");
 
-    // 9. Seleccionar categoría Accesorios
-    await page.getByTestId("category-Accesorios").click();
+    for (const productId of [3, 5, 8]) {
+      await expect(catalogPage.producto(productId)).toBeVisible();
+      await expect(catalogPage.nombreProducto(productId)).toBeVisible();
+    }
 
-    // 10. Verificar productos esperados
-    const product3 = page.getByTestId("product-3");
-    const product5 = page.getByTestId("product-5");
-    const product8 = page.getByTestId("product-8");
-
-    await expect(product3).toBeVisible();
-    await expect(product5).toBeVisible();
-    await expect(product8).toBeVisible();
-
-    // 11. Verificar los nombres de los productos
-    await expect(product3.getByTestId("product-name")).toBeVisible();
-    await expect(product5.getByTestId("product-name")).toBeVisible();
-    await expect(product8.getByTestId("product-name")).toBeVisible();
-
-    // 12. Verificar que solo se muestren 3 productos
-    const productosVisibles = page.getByTestId(/^product-\d+$/);
-    await expect(productosVisibles).toHaveCount(3);
-
-    // 13. Confirmar que Bug Hunting continúa activo
-    await expect(page.getByTestId("bug-status")).toHaveText("ON");
+    await expect(catalogPage.productosVisibles()).toHaveCount(3);
+    await expect(loginPage.bugStatus).toHaveText("ON");
   });
 });
