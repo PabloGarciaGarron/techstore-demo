@@ -113,3 +113,78 @@ git push origin main
 ```
 
 Se recomienda escribir el mensaje en una sola línea, utilizar verbos en presente y mantener una descripción breve y clara.
+
+### 6. 📊 Configuración de reportes Allure
+
+#### 1. Instalar Allure
+
+Desde la raíz del proyecto, ejecuta:
+
+```bash
+npm install -D allure-playwright allure-commandline allure-js-commons
+```
+
+#### 2. Configurar el reporter
+
+En `playwright.config.ts`, configura los reporters de la siguiente manera:
+
+```typescript
+reporter: [
+  ["list"],
+  ["html", { open: "never" }],
+  ["allure-playwright", { resultsDir: "allure-results" }],
+],
+```
+
+#### 3. Escribir las pruebas
+
+Escribe pruebas normales de Playwright. No es necesario utilizar Newman ni ningún conector adicional.
+
+#### 4. Agregar scripts al `package.json`
+
+```json
+"scripts": {
+  "test": "playwright test",
+  "report:allure:generate": "allure generate ./allure-results --clean -o ./allure-report",
+  "report:allure:open": "allure open ./allure-report",
+  "report:allure": "npm run report:allure:generate && npm run report:allure:open"
+}
+```
+
+Conserva los scripts existentes y agrega únicamente los que no estén definidos.
+
+#### 5. Agregar pasos descriptivos
+
+En las pruebas que tengan varias acciones, puedes utilizar `allure.step()` para describir cada etapa:
+
+```typescript
+await allure.step("Ir a la página de inicio", async () => {
+  await page.goto("/");
+});
+
+await allure.step("Iniciar sesión", async () => {
+  await page.getByLabel("Usuario").fill("admin");
+  await page.getByLabel("Contraseña").fill("admin123");
+});
+```
+
+#### 6. Ejecutar las pruebas y generar el reporte
+
+```bash
+npm test
+npm run report:allure
+```
+
+### 7. 📌 Configurar el `.gitignore`
+
+No se deben versionar las dependencias ni los resultados generados por las pruebas. Verifica que el archivo `.gitignore`, ubicado en la raíz del proyecto, contenga:
+
+```gitignore
+node_modules/
+allure-results/
+allure-report/
+test-results/
+playwright-report/
+```
+
+Estos directorios se generan localmente durante la ejecución de las pruebas.
