@@ -1,0 +1,3 @@
+HTTP creación: 201
+HTTP modificación: 200
+HTTP eliminación: 204

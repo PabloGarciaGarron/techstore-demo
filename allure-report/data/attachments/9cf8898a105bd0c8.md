@@ -1,0 +1,126 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: api\api-tc-014.spec.ts >> API-TC-014: Manager puede crear y modificar, pero no eliminar
+- Location: tests\api\api-tc-014.spec.ts:23:5
+
+# Error details
+
+```
+Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 403
+Received: 204
+```
+
+# Test source
+
+```ts
+  1   | import { test, expect } from "@playwright/test";
+  2   | 
+  3   | function getProductBody(responseBody: any): any {
+  4   |   if (responseBody.product !== undefined && responseBody.product !== null) {
+  5   |     return responseBody.product;
+  6   |   }
+  7   | 
+  8   |   if (responseBody.data !== undefined && responseBody.data !== null) {
+  9   |     return responseBody.data;
+  10  |   }
+  11  | 
+  12  |   return responseBody;
+  13  | }
+  14  | 
+  15  | function getProductId(product: any): number {
+  16  |   if (product.id !== undefined && product.id !== null) {
+  17  |     return product.id;
+  18  |   }
+  19  | 
+  20  |   throw new Error("La respuesta no contiene el id del producto");
+  21  | }
+  22  | 
+  23  | test("API-TC-014: Manager puede crear y modificar, pero no eliminar", async ({
+  24  |   request,
+  25  | }) => {
+  26  |   // 1. Autenticarse como Manager
+  27  |   const loginResponse = await request.post("/api/auth/login", {
+  28  |     data: {
+  29  |       username: "manager",
+  30  |       password: "manager123",
+  31  |     },
+  32  |   });
+  33  | 
+  34  |   expect(loginResponse.status()).toBe(200);
+  35  | 
+  36  |   const loginBody = await loginResponse.json();
+  37  | 
+  38  |   if (loginBody.token === undefined || loginBody.token === null) {
+  39  |     throw new Error("La autenticación no devolvió un token");
+  40  |   }
+  41  | 
+  42  |   const headers = {
+  43  |     Authorization: "Bearer " + loginBody.token,
+  44  |   };
+  45  | 
+  46  |   const productData = {
+  47  |     category: "electrodomesticos",
+  48  |     description: "Producto de prueba API",
+  49  |     freeShipping: false,
+  50  |     name: "Producto Manager API " + Date.now(),
+  51  |     originalPrice: 100,
+  52  |     price: 100,
+  53  |     rating: 0,
+  54  |     seller: "manager",
+  55  |     stock: 10,
+  56  |   };
+  57  | 
+  58  |   // 2. Crear producto
+  59  |   const createResponse = await request.post("/api/products", {
+  60  |     headers,
+  61  |     data: productData,
+  62  |   });
+  63  | 
+  64  |   console.log("HTTP creación:", createResponse.status());
+  65  |   expect(createResponse.status()).toBe(201);
+  66  | 
+  67  |   const createBody = await createResponse.json();
+  68  |   const createdProduct = getProductBody(createBody);
+  69  |   const productId = getProductId(createdProduct);
+  70  | 
+  71  |   // 3. Modificar producto
+  72  |   const updatedData = {
+  73  |     ...productData,
+  74  |     name: productData.name + " actualizado",
+  75  |     price: 120,
+  76  |   };
+  77  | 
+  78  |   const updateResponse = await request.put(`/api/products/${productId}`, {
+  79  |     headers,
+  80  |     data: updatedData,
+  81  |   });
+  82  | 
+  83  |   console.log("HTTP modificación:", updateResponse.status());
+  84  |   expect(updateResponse.status()).toBe(200);
+  85  | 
+  86  |   const updateBody = await updateResponse.json();
+  87  |   const updatedProduct = getProductBody(updateBody);
+  88  | 
+  89  |   expect(updatedProduct.id).toBe(productId);
+  90  |   expect(updatedProduct.name).toBe(updatedData.name);
+  91  |   expect(Number(updatedProduct.price)).toBe(120);
+  92  | 
+  93  |   // 4. Intentar eliminar el producto
+  94  |   const deleteResponse = await request.delete(`/api/products/${productId}`, {
+  95  |     headers,
+  96  |   });
+  97  | 
+  98  |   console.log("HTTP eliminación:", deleteResponse.status());
+> 99  |   expect(deleteResponse.status()).toBe(403);
+      |                                   ^ Error: expect(received).toBe(expected) // Object.is equality
+  100 | });
+  101 | 
+```

@@ -1,0 +1,2 @@
+HTTP: 400
+Mensaje: El carrito está vacío

@@ -1,0 +1,2 @@
+Estado: 200
+Respuesta: {"bugs":true}

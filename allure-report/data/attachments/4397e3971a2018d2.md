@@ -1,0 +1,179 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: web\WEB-TC-025.spec.ts >> WEB-TC-025: Creación de producto desde Gestión por Admin >> debe crear un producto desde Gestión y mostrarlo en el listado
+- Location: tests\web\WEB-TC-025.spec.ts:7:7
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator:  getByTestId('manage-feedback')
+Expected: visible
+Received: hidden
+Timeout:  5000ms
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByTestId('manage-feedback')
+    3 × locator resolved to <p hidden="" role="status" id="manage-feedback" class="confirmation" data-testid="manage-feedback"></p>
+      - unexpected value "hidden"
+    10 × locator resolved to <p hidden="" role="status" id="manage-feedback" class="confirmation" data-testid="manage-feedback">Producto "Cargador1 rápido" creado correctamente.</p>
+       - unexpected value "hidden"
+
+```
+
+```yaml
+- banner:
+  - heading "TechStore Franky" [level=1]
+  - search:
+    - searchbox "Buscar productos"
+    - button "Buscar"
+  - navigation:
+    - checkbox "Modo Bug Hunting" [checked]
+    - text: "Bug Hunting:"
+    - strong: "ON"
+    - button "Abrir carrito": Carrito (0)
+    - text: Hola,
+    - strong: admin
+    - text: admin
+    - button "Salir"
+- navigation "Menú principal":
+  - button "Inicio"
+  - button "Ofertas"
+  - button "Favoritos 0"
+  - button "Mis pedidos"
+  - button "Gestión"
+  - button "QA Runner"
+- main:
+  - heading "Gestión de productos" [level=2]
+  - paragraph:
+    - text: "Rol actual:"
+    - strong: admin
+    - text: . Puedes crear, editar y eliminar productos.
+  - textbox "Nombre del producto"
+  - textbox "Categoría"
+  - spinbutton "Precio"
+  - button "Crear producto"
+  - list:
+    - listitem:
+      - text: Laptop Pro 14" — $1299.00
+      - button "Eliminar"
+    - listitem:
+      - text: Auriculares inalámbricos — $199.99
+      - button "Eliminar"
+    - listitem:
+      - text: Teclado mecánico RGB — $89.50
+      - button "Eliminar"
+    - listitem:
+      - text: Monitor 27" 4K — $449.00
+      - button "Eliminar"
+    - listitem:
+      - text: Mouse ergonómico — $34.90
+      - button "Eliminar"
+    - listitem:
+      - text: Smartphone X12 — $799.00
+      - button "Eliminar"
+    - listitem:
+      - text: Smartwatch Fit 3 — $149.00
+      - button "Eliminar"
+    - listitem:
+      - text: Cámara web 1080p — $45.00
+      - button "Eliminar"
+    - listitem:
+      - text: Tablet Air 10" — $329.00
+      - button "Eliminar"
+    - listitem:
+      - text: Parlante Bluetooth — $59.99
+      - button "Eliminar"
+    - listitem:
+      - text: Cargador1 rápido — $24.99
+      - button "Eliminar"
+```
+
+# Test source
+
+```ts
+  1  | import { expect, test } from "@playwright/test";
+  2  | import { LoginPage } from "../../pages/LoginPage";
+  3  | import { ManagePage } from "../../pages/ManagePage";
+  4  | import { NavigationPage } from "../../pages/NavigationPage";
+  5  | 
+  6  | test.describe("WEB-TC-025: Creación de producto desde Gestión por Admin", () => {
+  7  |   test("debe crear un producto desde Gestión y mostrarlo en el listado", async ({
+  8  |     page,
+  9  |     request,
+  10 |   }) => {
+  11 |     const productName = "Cargador1 rápido";
+  12 |     const productCategory = "Accesorios";
+  13 |     const productPrice = "24.99";
+  14 |     const expectedPrice = "$24.99";
+  15 | 
+  16 |     const resetStore = await request.post("/api/test/reset");
+  17 |     expect(resetStore.ok()).toBeTruthy();
+  18 | 
+  19 |     const bugConfig = await request.post("/api/config/bugs", {
+  20 |       data: { enabled: true },
+  21 |     });
+  22 |     expect(bugConfig.ok()).toBeTruthy();
+  23 | 
+  24 |     const productsResponse = await request.get("/api/products");
+  25 |     expect(productsResponse.ok()).toBeTruthy();
+  26 |     const initialProducts = (await productsResponse.json()) as Array<{
+  27 |       id: number;
+  28 |     }>;
+  29 | 
+  30 |     const loginPage = new LoginPage(page);
+  31 |     const navigationPage = new NavigationPage(page);
+  32 |     const managePage = new ManagePage(page);
+  33 | 
+  34 |     try {
+  35 |       await loginPage.ir();
+  36 |       await expect(loginPage.bugStatus).toHaveText("ON");
+  37 | 
+  38 |       await loginPage.loginComo("admin");
+  39 |       await expect(loginPage.mensajeError).toBeHidden();
+  40 |       await expect(loginPage.sesion).toBeVisible();
+  41 |       await expect(loginPage.usuarioActual).toHaveText("admin");
+  42 |       await expect(loginPage.rolActual).toHaveText("admin");
+  43 |       await expect(navigationPage.gestion).toBeVisible();
+  44 | 
+  45 |       await navigationPage.irAGestion();
+  46 | 
+  47 |       await expect(managePage.vista).toBeVisible();
+  48 |       await expect(managePage.rol).toHaveText("admin");
+  49 |       await expect(managePage.formularioCrear).toBeVisible();
+  50 |       await expect(managePage.lista.locator("li")).toHaveCount(
+  51 |         initialProducts.length
+  52 |       );
+  53 | 
+  54 |       await managePage.crearProducto(productName, productCategory, productPrice);
+  55 | 
+> 56 |       await expect(managePage.feedback).toBeVisible();
+     |                                         ^ Error: expect(locator).toBeVisible() failed
+  57 |       await expect(managePage.feedback).toHaveText(
+  58 |         `Producto "${productName}" creado correctamente.`
+  59 |       );
+  60 |       await expect(managePage.lista.locator("li")).toHaveCount(
+  61 |         initialProducts.length + 1
+  62 |       );
+  63 | 
+  64 |       const createdProduct = managePage.productoPorNombre(productName);
+  65 |       await expect(createdProduct).toBeVisible();
+  66 |       await expect(createdProduct).toContainText(productName);
+  67 |       await expect(createdProduct).toContainText(expectedPrice);
+  68 |       await expect(loginPage.bugStatus).toHaveText("ON");
+  69 |     } finally {
+  70 |       await request.post("/api/test/reset");
+  71 |       await request.post("/api/config/bugs", { data: { enabled: true } });
+  72 |     }
+  73 |   });
+  74 | });
+  75 | 
+```
