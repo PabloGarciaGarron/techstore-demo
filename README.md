@@ -258,7 +258,18 @@ Dentro de la configuración del proyecto:
 
 En la sección **Build**, haz clic en **Add build step** y selecciona **Windows batch command**.
 
-Usa este bloque:
+Usa este bloque (opcion 1):
+---> Tener en cuenta que el directorio (seguido del cd en la primera linea) se lo puede copiar de la seccion "Console Output" en una de las primeras ejecuciones
+
+```bat
+cd "/c/ProgramData/Jenkins/.jenkins/workspace/[Nombre_del_proyecto]"
+npm install
+npm install --save-dev allure-playwright
+npx allure generate
+npx playwright test --ui
+```
+
+O Usa este bloque (opcion 2):
 
 ```bat
 cd /d "%WORKSPACE%"
@@ -273,6 +284,36 @@ Este paso instala dependencias y ejecuta las pruebas en los navegadores configur
 ### 7. Verificar que se genere `allure-results`
 
 Si quieres comprobar que las pruebas están generando el reporte de Allure, agrega otro **Windows batch command** adicional:
+
+Usa este bloque (opcion 1):
+
+```bat
+@echo off
+
+echo Workspace actual:
+cd
+echo %WORKSPACE%
+
+call npm ci
+
+:: Descarga los binarios de los tres navegadores
+call npx playwright install chromium firefox webkit
+
+if exist allure-results rmdir /s /q allure-results
+
+:: Ejecuta las pruebas en los tres proyectos en paralelo
+call npx playwright test --project=chromium --project=firefox --project=webkit
+
+echo Verificando resultados Allure:
+if exist allure-results (
+    dir allure-results
+) else (
+    echo ERROR: No se genero allure-results
+    exit /b 1
+)
+```
+
+O usa este bloque (opcion 2):
 
 ```bat
 @echo off
@@ -302,6 +343,11 @@ allure-results
 ```
 
 No necesitas poner una ruta absoluta. Jenkins lo resolverá a partir del workspace del proyecto.
+De todas maneras si quieres poner la ruta absoluta simplemente pega el directorio (el que copiaste de las primeras lineas de una de las ejecuciones del "Console Output") delante de "\allure-results"
+
+```text
+C:\ProgramData\Jenkins\.jenkins\workspace\[NombreProyecto]\allure-results
+```
 
 ### 9. Ejecutar el pipeline
 
