@@ -188,3 +188,152 @@ playwright-report/
 ```
 
 Estos directorios se generan localmente durante la ejecución de las pruebas.
+
+## 7 Configuración de Jenkins y Allure
+
+### 1. Instalar Jenkins
+
+1. Descarga el archivo WAR más reciente de Jenkins desde:
+   https://www.jenkins.io/download
+
+2. Guarda el archivo en una carpeta del equipo.
+
+3. Abre una terminal o consola de comandos y accede a la carpeta donde descargaste el archivo.
+
+4. Ejecuta:
+
+```bash
+java -jar jenkins.war
+```
+
+5. Abre tu navegador y entra a:
+
+```text
+http://localhost:8080
+```
+
+6. Espera a que aparezca la página de **Unlock Jenkins**.
+
+7. Copia la contraseña inicial desde la consola donde levantaste Jenkins o desde la ruta indicada por Jenkins.
+
+8. Pega la contraseña y sigue el asistente de configuración.
+
+### 2. Crear el primer usuario administrador
+
+Cuando aparezca la pantalla **Create First Admin User**:
+
+- Completa los datos del usuario administrador.
+- Haz clic en **Save and Finish**.
+- Luego en **Start using Jenkins**.
+
+### 3. Instalar el plugin de Allure
+
+1. En la pantalla principal de Jenkins, haz clic en el icono de engranaje.
+2. Selecciona **Plugins**.
+3. En el menú lateral, elige **Available plugins**.
+4. Filtra por **Allure**.
+5. Instala el plugin correspondiente.
+6. Reinicia Jenkins si es necesario.
+
+### 4. Crear un proyecto en Jenkins
+
+1. En el menú principal, haz clic en **New Item**.
+2. Selecciona **Freestyle project**.
+3. Asigna un nombre, por ejemplo: `TechStore-Playwright`.
+4. Haz clic en **OK**.
+
+### 5. Configurar Git en el proyecto
+
+Dentro de la configuración del proyecto:
+
+1. En **Source Code Management**, selecciona **Git**.
+2. En **Repository URL**, agrega la URL del repositorio GitHub.
+3. En **Branch Specifier**, escribe:
+
+```text
+*/main
+```
+
+### 6. Configurar el paso de build
+
+En la sección **Build**, haz clic en **Add build step** y selecciona **Windows batch command**.
+
+Usa este bloque:
+
+```bat
+cd /d "%WORKSPACE%"
+call npm ci
+call npx playwright install chromium firefox webkit
+if exist allure-results rmdir /s /q allure-results
+call npx playwright test --project=chromium --project=firefox --project=webkit
+```
+
+Este paso instala dependencias y ejecuta las pruebas en los navegadores configurados.
+
+### 7. Verificar que se genere `allure-results`
+
+Si quieres comprobar que las pruebas están generando el reporte de Allure, agrega otro **Windows batch command** adicional:
+
+```bat
+@echo off
+echo Workspace actual:
+cd
+echo %WORKSPACE%
+if exist allure-results (
+    dir allure-results
+) else (
+    echo ERROR: No se genero allure-results
+    exit /b 1
+)
+```
+
+Esto te permite confirmar si la carpeta de resultados fue creada por Playwright.
+
+### 8. Configurar la integración con Allure
+
+En la sección **Post-build Actions**:
+
+1. Haz clic en **Add post-build action**.
+2. Selecciona **Allure Report**.
+3. En **Results**, escribe:
+
+```text
+allure-results
+```
+
+No necesitas poner una ruta absoluta. Jenkins lo resolverá a partir del workspace del proyecto.
+
+### 9. Ejecutar el pipeline
+
+1. En la vista del proyecto, haz clic en **Build Now**.
+2. Espera a que termine el proceso.
+3. Si todo sale bien, en el resultado del build aparecerá el reporte de Allure.
+4. Haz clic en **Allure Report** para abrirlo.
+
+### 10. Recomendaciones importantes
+
+- Para Jenkins en Windows, usa siempre `cmd`/batch.
+- La carpeta que Jenkins debe interpretar como resultado de Allure es:
+  `allure-results`
+- La carpeta `allure-report` se genera al abrir el reporte, pero el plugin de Jenkins necesita `allure-results` como entrada.
+- Si el reporte dice `0 test cases`, normalmente significa que Jenkins no encontró resultados válidos en `allure-results`.
+
+### 11. Ejemplo de configuración final
+
+Tu bloque de build debería quedar similar a esto:
+
+```bat
+cd /d "%WORKSPACE%"
+call npm ci
+call npx playwright install chromium firefox webkit
+if exist allure-results rmdir /s /q allure-results
+call npx playwright test --project=chromium --project=firefox --project=webkit
+```
+
+Y en el plugin de Allure:
+
+```text
+allure-results
+```
+
+Con esta configuración, Jenkins ejecutará las pruebas y generará el reporte Allure correctamente.
