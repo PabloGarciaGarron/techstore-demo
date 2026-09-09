@@ -23,7 +23,6 @@ function getProductId(product: any): number {
 test("API-TC-015: Admin tiene permisos completos sobre productos", async ({
   request,
 }) => {
-  // 1. Autenticarse como Admin
   const loginResponse = await request.post("/api/auth/login", {
     data: {
       username: "admin",
@@ -43,6 +42,17 @@ test("API-TC-015: Admin tiene permisos completos sobre productos", async ({
     Authorization: "Bearer " + loginBody.token,
   };
 
+  const bugHuntingResponse = await request.post("/api/config/bugs", {
+    headers,
+    data: {
+      enabled: true,
+    },
+  });
+
+  expect(bugHuntingResponse.status()).toBe(200);
+  console.log("Estado:", bugHuntingResponse.status());
+  console.log("Respuesta:", await bugHuntingResponse.text());
+
   const productData = {
     category: "electrodomesticos",
     description: "Producto creado mediante API",
@@ -55,7 +65,6 @@ test("API-TC-015: Admin tiene permisos completos sobre productos", async ({
     stock: 10,
   };
 
-  // 2. Crear producto
   const createResponse = await request.post("/api/products", {
     headers,
     data: productData,
@@ -67,7 +76,6 @@ test("API-TC-015: Admin tiene permisos completos sobre productos", async ({
   const createdProduct = getProductBody(createBody);
   const productId = getProductId(createdProduct);
 
-  // 3. Actualizar el producto
   const updatedData = {
     ...productData,
     name: productData.name + " actualizado",
@@ -81,7 +89,6 @@ test("API-TC-015: Admin tiene permisos completos sobre productos", async ({
 
   expect(updateResponse.status()).toBe(200);
 
-  // 4. Consultar el producto actualizado
   const getResponse = await request.get(`/api/products/${productId}`, {
     headers,
   });
@@ -95,14 +102,12 @@ test("API-TC-015: Admin tiene permisos completos sobre productos", async ({
   expect(retrievedProduct.name).toBe(updatedData.name);
   expect(Number(retrievedProduct.price)).toBe(150);
 
-  // 5. Eliminar el producto
   const deleteResponse = await request.delete(`/api/products/${productId}`, {
     headers,
   });
 
   expect(deleteResponse.status()).toBe(204);
 
-  // 6. Verificar que el producto eliminado ya no existe
   const deletedProductResponse = await request.get(
     `/api/products/${productId}`,
     { headers },

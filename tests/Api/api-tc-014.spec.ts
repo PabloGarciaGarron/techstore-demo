@@ -43,6 +43,17 @@ test("API-TC-014: Manager puede crear y modificar, pero no eliminar", async ({
     Authorization: "Bearer " + loginBody.token,
   };
 
+  const bugHuntingResponse = await request.post("/api/config/bugs", {
+    headers,
+    data: {
+      enabled: true,
+    },
+  });
+
+  expect(bugHuntingResponse.status()).toBe(200);
+  console.log("Estado:", bugHuntingResponse.status());
+  console.log("Respuesta:", await bugHuntingResponse.text());
+
   const productData = {
     category: "electrodomesticos",
     description: "Producto de prueba API",

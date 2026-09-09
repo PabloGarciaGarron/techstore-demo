@@ -4,7 +4,6 @@ test.describe("Creación de pedidos mediante API", () => {
   test("API-TC-011: no permite comprar con el carrito vacío", async ({
     request,
   }) => {
-    // 1. Autenticarse como customer
     const loginResponse = await request.post("/api/auth/login", {
       data: {
         username: "customer",
@@ -21,7 +20,16 @@ test.describe("Creación de pedidos mediante API", () => {
       Authorization: `Bearer ${token}`,
     };
 
-    // 2. Consultar el carrito del usuario autenticado
+    const bugHuntingResponse = await request.post("/api/config/bugs", {
+      headers,
+      data: {
+        enabled: true,
+      },
+    });
+    expect(bugHuntingResponse.status()).toBe(200);
+    console.log("Estado:", bugHuntingResponse.status());
+    console.log("Respuesta:", await bugHuntingResponse.text());
+
     const cartResponse = await request.get("/api/cart", {
       headers,
     });
@@ -31,11 +39,9 @@ test.describe("Creación de pedidos mediante API", () => {
     const cartBody = await cartResponse.json();
     let items = cartBody.items;
 
-    // 3. Confirmar que el carrito está vacío
     expect(Array.isArray(items)).toBeTruthy();
     expect(items).toHaveLength(0);
 
-    // 4. Intentar crear el pedido
     const orderResponse = await request.post("/api/orders", {
       headers,
       data: {
@@ -49,7 +55,6 @@ test.describe("Creación de pedidos mediante API", () => {
     console.log("HTTP:", orderResponse.status());
     console.log("Mensaje:", errorMessage);
 
-    // 5. Validar que no se pueda realizar la compra
     expect(orderResponse.status()).toBe(400);
     expect(errorMessage.toLowerCase()).toContain("el carrito está vacío");
     expect(responseBody.order).toBeUndefined();

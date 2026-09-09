@@ -37,7 +37,6 @@ test("API-TC-013: protege la creación de productos", async ({ request }) => {
     stock: 10,
   };
 
-  // Escenario A: solicitud sin token
   const anonymousResponse = await request.post("/api/products", {
     data: productData,
   });
@@ -53,7 +52,6 @@ test("API-TC-013: protege la creación de productos", async ({ request }) => {
 
   expect(productExists(productsAfterAnonymous, productName)).toBe(false);
 
-  // Autenticarse como Customer
   const loginResponse = await request.post("/api/auth/login", {
     data: {
       username: "customer",
@@ -73,7 +71,6 @@ test("API-TC-013: protege la creación de productos", async ({ request }) => {
     Authorization: "Bearer " + loginBody.token,
   };
 
-  // Escenario B: solicitud con token de Customer
   const customerResponse = await request.post("/api/products", {
     headers: customerHeaders,
     data: productData,

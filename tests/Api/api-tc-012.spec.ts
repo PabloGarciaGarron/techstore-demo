@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 
 test("API-TC-012: checkout con dos productos", async ({ request }) => {
-  // 1. Autenticarse como customer
   const loginResponse = await request.post("/api/auth/login", {
     data: {
       username: "customer",
@@ -20,7 +19,6 @@ test("API-TC-012: checkout con dos productos", async ({ request }) => {
     Authorization: `Bearer ${token}`,
   };
 
-  //Habilitacion del BugHunting:
   const bugHuntingResponse = await request.post("/api/config/bugs", {
     headers,
     data: {
@@ -32,7 +30,6 @@ test("API-TC-012: checkout con dos productos", async ({ request }) => {
   console.log("Estado:", bugHuntingResponse.status());
   console.log("Respuesta:", await bugHuntingResponse.text());
 
-  // 2. Agregar producto 1 x1
   const product1Response = await request.post("/api/cart/items", {
     headers,
     data: {
@@ -43,7 +40,6 @@ test("API-TC-012: checkout con dos productos", async ({ request }) => {
 
   expect(product1Response.ok()).toBeTruthy();
 
-  // 3. Agregar producto 4 x2
   const product4Response = await request.post("/api/cart/items", {
     headers,
     data: {
@@ -54,7 +50,6 @@ test("API-TC-012: checkout con dos productos", async ({ request }) => {
 
   expect(product4Response.ok()).toBeTruthy();
 
-  // 4. Crear el pedido
   const orderResponse = await request.post("/api/orders", {
     headers,
     data: {
@@ -73,7 +68,6 @@ test("API-TC-012: checkout con dos productos", async ({ request }) => {
   expect(order.id).toBeTruthy();
   expect(Number(order.totalPrice)).toBe(2197);
 
-  // Validar los artículos incluidos en el pedido
   let orderItems;
 
   if (order.items !== undefined && order.items !== null) {
@@ -135,7 +129,6 @@ test("API-TC-012: checkout con dos productos", async ({ request }) => {
   expect(product1?.quantity).toBe(1);
   expect(product4?.quantity).toBe(2);
 
-  // 5. Verificar que el carrito quedó vacío
   const cartResponse = await request.get("/api/cart", {
     headers,
   });
@@ -148,7 +141,6 @@ test("API-TC-012: checkout con dos productos", async ({ request }) => {
   expect(Array.isArray(cartItems)).toBeTruthy();
   expect(cartItems).toHaveLength(0);
 
-  // 6. Consultar el pedido por su identificador
   const orderByIdResponse = await request.get(`/api/orders/${order.id}`, {
     headers,
   });
